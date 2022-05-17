@@ -1,14 +1,15 @@
-import '@vaadin/app-layout';
-import { AppLayout } from '@vaadin/app-layout';
+import "@vaadin/flow-frontend/fc-applayout/fc-fusion-layout";
+import { FusionLayout } from "@vaadin/flow-frontend/fc-applayout/fc-fusion-layout";
 import '@vaadin/app-layout/vaadin-drawer-toggle';
 import '@vaadin/avatar/vaadin-avatar';
 import '@vaadin/context-menu';
 import '@vaadin/tabs';
 import '@vaadin/tabs/vaadin-tab';
 import { html } from 'lit';
+import { query } from 'lit-element';
 import { customElement } from 'lit/decorators.js';
 import { router } from '../index';
-import { appStore } from '../stores/app-store';
+import { views } from '../routes';
 import { Layout } from './view';
 
 interface RouteInfo {
@@ -19,70 +20,26 @@ interface RouteInfo {
 
 @customElement('main-layout')
 export class MainLayout extends Layout {
+
+  @query("fc-fusion-layout")
+  layout!: FusionLayout;
   render() {
     return html`
-      <vaadin-app-layout primary-section="drawer">
-        <header class="view-header" slot="navbar">
-          <vaadin-drawer-toggle aria-label="Menu toggle" class="view-toggle" theme="contrast"></vaadin-drawer-toggle>
-          <h1 class="view-title">${appStore.currentViewTitle}</h1>
-        </header>
-        <section class="drawer-section" slot="drawer">
-          <h2 class="app-name">${appStore.applicationName}</h2>
-          <nav aria-labelledby="views-title" class="menu-item-container">
-            <ul class="navigation-list">
-              ${this.getMenuRoutes().map(
-                (viewRoute) => html`
-                  <li>
-                    <a
-                      ?highlight=${viewRoute.path == appStore.location}
-                      class="menu-item-link"
-                      href=${router.urlForPath(viewRoute.path)}
-                    >
-                      <span class="${viewRoute.icon} menu-item-icon"></span>
-                      <span class="menu-item-text">${viewRoute.title}</span>
-                    </a>
-                  </li>
-                `
-              )}
-            </ul>
-          </nav>
-          <footer class="footer"></footer>
-        </section>
-        <slot></slot>
-      </vaadin-app-layout>
-    `;
+    <fc-fusion-layout swipeOpen fixed 
+                      userName="A given user" title="Social App"
+                      appLogo="icons/icon.png"
+                      profilePicture="icons/icon.png">
+      <slot></slot>
+    </fc-fusion-layout>`;
   }
-
   connectedCallback() {
     super.connectedCallback();
     this.classList.add('block', 'h-full');
-    this.reaction(
-      () => appStore.location,
-      () => {
-        AppLayout.dispatchCloseOverlayDrawerEvent();
-      }
-    );
   }
-
+  firstUpdated() {
+    this.layout.router = router;
+  }
   private getMenuRoutes(): RouteInfo[] {
-    return [
-      {
-        path: 'forum',
-        title: 'Status Updates',
-        icon: 'la la-list',
-      },
-
-      {
-        path: 'contacts',
-        title: 'Contacts',
-        icon: 'la la-columns',
-      },
-
-      {
-        path: 'about',
-        title: 'About',
-        icon: 'la la-file',
-      },
-    ];
+    return views.filter((route) => route.title) as RouteInfo[];
   }
 }
